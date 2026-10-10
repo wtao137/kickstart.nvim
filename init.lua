@@ -99,7 +99,7 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -122,7 +122,7 @@ do
   --  Schedule the setting after `UiEnter` because it can increase startup-time.
   --  Remove this option if you want your OS clipboard to remain independent.
   --  See `:help 'clipboard'`
-  vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
+  -- vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
 
   -- Enable break indent
   vim.o.breakindent = true
@@ -733,9 +733,9 @@ do
   --  See `:help lsp-config` for information about keys and how to configure
   ---@type table<string, vim.lsp.Config>
   local servers = {
-    -- clangd = {},
+    clangd = {},
     -- gopls = {},
-    -- pyright = {},
+    basedpyright = {},
     -- tsc = {},
     --
     -- Some languages (like rust) have entire language plugins that can be useful:
@@ -896,7 +896,7 @@ do
       -- <c-k>: Toggle signature help
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
-      preset = 'default',
+      preset = 'enter',
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -1019,6 +1019,27 @@ do
   -- require 'kickstart.plugins.lint'
   -- require 'kickstart.plugins.autopairs'
   -- require 'kickstart.plugins.neo-tree'
+
+  -- restore last cursor position
+  vim.api.nvim_create_autocmd('BufRead', {
+    callback = function(opts)
+      vim.api.nvim_create_autocmd('BufWinEnter', {
+        once = true,
+        buffer = opts.buf,
+        callback = function()
+          local ft = vim.bo[opts.buf].filetype
+          local last_known_line = vim.api.nvim_buf_get_mark(opts.buf, '"')[1]
+          if
+            not (ft:match('commit') and ft:match('rebase'))
+            and last_known_line > 1
+            and last_known_line <= vim.api.nvim_buf_line_count(opts.buf)
+          then
+            vim.api.nvim_feedkeys([[g`"]], 'nx', false)
+          end
+        end,
+      })
+    end,
+  })
 
   -- NOTE: You can add your own plugins, configuration, etc. in `lua/custom/plugins/*.lua`.
   --
